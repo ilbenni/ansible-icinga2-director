@@ -1,0 +1,33 @@
+---
+- name: Install Mysql prerequisite
+  apt: name=python-mysqldb
+
+- name: Create a Director Database for Icinga2
+  mysql_db: name=director
+            encoding=utf8
+            state=present
+
+- name: Create director Database User and configure Grants
+  mysql_user: name=director
+              password=director
+              state=present
+              priv="director.*:ALL"
+
+- name: Add icingaweb2 database resource
+  blockinfile:
+    dest: /etc/icingaweb2/resources.ini
+    marker:  "; {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+             [Director DB]
+             type = "db"
+             db = "mysql"
+             host = "localhost"
+             dbname = "director"
+             username = "director"
+             password = "director"
+             charset = "utf8"
+
+- git:
+    repo: https://github.com/Icinga/icingaweb2-module-director.git
+    dest: /usr/share/icingaweb2/modules/director
+    version: v1.3.1
